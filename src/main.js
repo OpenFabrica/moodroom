@@ -1640,6 +1640,13 @@ function loop(now) {
 }
 
 // 开发模式下暴露内部对象，方便自动化测试和调试
-if (import.meta.env.DEV) window.__moodroom = { badPieces: () => badPieces, scene, overlay, camera, renderer, state, sunSprite, moonSprite, sunPath, orbScreen, setTime };
+if (import.meta.env.DEV) window.__moodroom = {
+  badPieces: () => badPieces, scene, overlay, camera, renderer, state, sunSprite, moonSprite, sunPath, orbScreen, setTime,
+  presets: PRESETS,
+  // 录制演示视频用：直接摆相机（方位角、极角、距离），绕过鼠标交互
+  view: (az, pol, d) => { placeCamera(az, pol, d ?? homeDistance(), controls.orbit.target); controls.orbit.update(); },
+  // 录制演示视频用：一次换上一整套材质，不触发时间动画和撤销记录
+  slots: (ids) => { for (const s of SLOTS) if (ids[s.id]) setSlotMaterial(s.id, ids[s.id]); refreshAll(); },
+};
 
 init();

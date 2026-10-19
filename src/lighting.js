@@ -109,7 +109,8 @@ export class Lighting {
 
     this.pool = [];
     for (let i = 0; i < 8; i++) {
-      const p = new THREE.PointLight('#ffc98a', 0, 5.5, 1.6);
+      // 衰减指数取 1.3（比物理值 2 平缓）：灯旁的墙不会被照成一块刺眼的白斑，远处仍有余光
+      const p = new THREE.PointLight('#ffc98a', 0, 6, 1.3);
       p.position.set(0, -50, 0);
       scene.add(p);
       this.pool.push(p);
@@ -149,9 +150,10 @@ export class Lighting {
     // 环境贴图强度：白天提供柔和天光，夜里压低，让灯光成为主角
     this.scene.environmentIntensity = 0.03 + s.hemi * 0.22;
     this.fill.intensity = 0.1 + s.hemi * 0.3;
-    for (const p of this.pool) p.intensity = (p.userData.base || 0) * s.lamp * 4.5 * this.scale.lamp;
-    fixed('shade').emissiveIntensity = s.lamp * 1.4;
-    fixed('bulb').emissiveIntensity = s.lamp * 4;
+    for (const p of this.pool) p.intensity = (p.userData.base || 0) * s.lamp * 2.6 * this.scale.lamp;
+    // 灯罩和灯泡自发光压低，避免泛光把它们晕成一团白
+    fixed('shade').emissiveIntensity = s.lamp * 0.6;
+    fixed('bulb').emissiveIntensity = s.lamp * 1.5;
     fixed('screen').emissiveIntensity = 0.2 + s.lamp * 0.8;
     fixed('trim').emissiveIntensity = 0.6 + s.lamp * 1.4;
 
