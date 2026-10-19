@@ -2,9 +2,9 @@
 
 能走进去的情绪板。一套掀掉屋顶的 3D 小公寓：把木材、石材、布艺和涂料拖到墙面、地面和软装上，摆家具，拖太阳，房间会实时读出「温馨 / 明亮 / 沉郁」。
 
-[![演示视频（点击播放）](docs/cover.jpg)](media/moodroom-demo.mp4)
+![Moodroom 演示](media/preview.webp)
 
-▶ 点击上图播放演示视频（15 秒，带背景音乐）。
+▶ 带背景音乐的完整视频（15 秒，1080p）：[下载 MP4](https://github.com/OpenFabrica/moodroom/raw/master/media/moodroom-demo.mp4)
 
 ![Moodroom](docs/screenshot.jpg)
 
