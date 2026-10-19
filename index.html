@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Moodroom · 能走进去的情绪板</title>
+  <meta name="description" content="把木材、石材、布艺和涂料拖到 3D 小公寓里，摆家具、拖太阳，看房间变得温馨、明亮或沉郁。" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230e131d'/%3E%3Cpath d='M7 23V12l9-5 9 5v11' fill='none' stroke='%23d9a86c' stroke-width='2.4' stroke-linejoin='round'/%3E%3Crect x='13' y='16' width='6' height='7' rx='1.5' fill='%2386e0ff'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="world"></div>
+  <svg id="leaders" aria-hidden="true"></svg>
+  <div id="cards" aria-hidden="true"></div>
+
+  <div id="loading"><div class="spin"></div><span>正在铺地板…</span></div>
+
+  <div id="app">
+    <!-- 左侧：标题、预设、情绪仪表、材质板 -->
+    <aside id="left" class="ui">
+      <h1 class="brand"><span>Mood</span>room</h1>
+      <div id="presets" class="row3"></div>
+      <div id="meter" class="row3"></div>
+      <p id="line" class="panel"></p>
+      <section id="board" class="panel">
+        <header><span class="cap">情绪板</span><span class="hint">点一个表面</span></header>
+        <div id="slots"></div>
+      </section>
+    </aside>
+
+    <!-- 右上：工具栏 -->
+    <nav id="tools" class="ui">
+      <div class="grp">
+        <button id="undo" title="撤销 (⌘Z)" aria-label="撤销"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+        <button id="redo" title="重做 (⇧⌘Z)" aria-label="重做"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+      </div>
+      <div class="grp">
+        <button id="shot" title="保存图片" aria-label="保存图片"><svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg></button>
+        <button id="share" title="复制这个房间的链接" aria-label="复制链接"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>
+        <button id="eye" title="隐藏材质卡片和太阳轨迹 (⇧N)" aria-label="隐藏标注"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button id="cine" title="电影镜头 (C)" aria-label="电影镜头"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg></button>
+        <button id="helpbtn" title="使用说明" aria-label="帮助"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
+      </div>
+    </nav>
+
+    <!-- 右侧：日光面板 -->
+    <section id="daylight" class="panel ui">
+      <header><span class="cap">日光</span><span id="clock" class="mono">--:--</span></header>
+      <div id="moments"></div>
+      <div class="slider">
+        <input id="time" type="range" min="5.5" max="23.5" step="0.01" aria-label="一天中的时刻" />
+        <div class="ticks"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- 底部：样品托盘 -->
+    <section id="tray" class="panel ui">
+      <header>
+        <div id="tabs"></div>
+        <div id="target" hidden><span class="mono"></span><button aria-label="取消选中表面">×</button></div>
+      </header>
+      <div id="items"></div>
+    </section>
+  </div>
+
+  <!-- 家具小弹窗 -->
+  <div id="popup" class="panel" hidden>
+    <b id="pname">沙发</b>
+    <button id="pturn"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>转向</button>
+    <button id="premove"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg>移除</button>
+  </div>
+
+  <div id="sunbadge" class="mono" hidden></div>
+  <div id="tip" hidden><b></b><span class="mono"></span></div>
+  <div id="ghost" hidden></div>
+  <div id="toast" hidden></div>
+
+  <!-- 帮助说明 -->
+  <div id="help" class="modal" hidden>
+    <div class="sheet panel">
+      <button class="x" aria-label="关闭">×</button>
+      <h2>能走进去的情绪板</h2>
+      <p>做设计时，人们常把材料样品钉在一块板上，再在脑子里想象房间的样子。这里不用想象：一套掀掉屋顶的小公寓就摆在你面前，有客厅、餐区、卧室和书房。材质、家具和阳光，一起决定房间给人的感觉。</p>
+      <h3>材质</h3>
+      <p>从底部托盘拿起一块样品，移到房间上方。能用的表面上，鼠标下会先出现一小块圆形预览。松手后，它会铺满整个表面。木材适合地板、木格栅和木家具；石材适合地板和墙面；涂料用在墙面和木格栅上；布艺用在沙发座椅、靠垫、床品和地毯上。也可以先点一个表面，再点样品。</p>
+      <h3>家具</h3>
+      <p>打开「家具」标签，把家具拖进房间；也可以直接拖动房间里已有的家具。家具会对齐 10 厘米网格，靠近墙时自动贴墙，不会穿墙，也不会和别的家具重叠。拖动时滚动鼠标滚轮可以转向。点一下家具，可以转向或移除。</p>
+      <h3>光线</h3>
+      <p>沿着轨迹拖动太阳，或者拖动「日光」滑块。早晨的光从餐区的窗斜照进来，正午的光从后面的大窗落下，傍晚的阳光从开口一侧低低地扫进来。天黑以后，台灯会亮起。右边四张小图是你的房间在一天四个时段的样子。</p>
+      <h3>情绪仪表</h3>
+      <p>浅色表面加上日光，房间显得<em class="m-bright">明亮</em>。暖色、柔软的质感和低角度的金色光线，让房间<em class="m-cozy">温馨</em>。深色表面和一团团灯光，让房间<em class="m-moody">沉郁</em>。这只是经验规则，每个房间都是几种感觉的混合。</p>
+      <h3>快捷键</h3>
+      <p class="keys"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 预设 · <kbd>[</kbd><kbd>]</kbd> 移动太阳 · <kbd>,</kbd><kbd>.</kbd> 家具转向 · <kbd>Del</kbd> 移除家具 · <kbd>⌘Z</kbd> 撤销 · <kbd>⇧⌘Z</kbd> 重做 · <kbd>C</kbd> 电影镜头 · <kbd>⇧N</kbd> 隐藏标注 · <kbd>R</kbd> 重置视角 · <kbd>/</kbd> 隐藏界面 · <kbd>⌘'</kbd> 渲染设置 · 拖动旋转视角 · 右键拖动平移 · 滚轮缩放 · <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移动 · <kbd>Q</kbd><kbd>E</kbd> 转向</p>
+    </div>
+  </div>
+
+  <!-- 渲染设置（⌘' 打开） -->
+  <div id="render" class="panel" hidden>
+    <header><span class="cap">渲染设置</span><button class="x" aria-label="关闭">×</button></header>
+    <div id="rrows"></div>
+    <p class="hint">拖动或滚动滑块 · 双击恢复默认 · ↑↓ 切换行 · ←→ 调值 · 按住 ⇧ 粗调 · ⇧0 全部恢复 · C 复制 · ⌘' 关闭</p>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
